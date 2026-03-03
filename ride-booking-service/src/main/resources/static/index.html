@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ride Booking System</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+            background-color: #f4f6f8;
+        }
+
+        h2 {
+            color: #2c3e50;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🚖 Ride Booking Service</h1>
+
+<div class="card">
+    <h2>Book Ride</h2>
+    <input id="pickup" placeholder="Pickup Location">
+    <input id="drop" placeholder="Drop Location">
+    <input id="user" placeholder="User Name">
+    <br>
+    <button onclick="bookRide()">Book Ride</button>
+</div>
+
+<div class="card">
+    <h2>Manage Ride</h2>
+    <input id="rideId" placeholder="Ride ID">
+    <br>
+    <button onclick="getRide()">Check Status</button>
+    <button onclick="userCancel()">User Cancel</button>
+    <button onclick="driverCancel()">Driver Cancel</button>
+    <button onclick="startRide()">Start Ride</button>
+    <button onclick="completeRide()">Complete Ride</button>
+
+    <p id="result"></p>
+</div>
+
+<script>
+function bookRide() {
+    fetch('/api/rides/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            pickupLocation: document.getElementById('pickup').value,
+            dropLocation: document.getElementById('drop').value,
+            userName: document.getElementById('user').value
+        })
+    })
+    .then(res => res.json())
+    .then(response => {
+        let data = response.data;
+
+        document.getElementById('result').innerText =
+            "Ride Created. ID: " + data.id + " | Status: " + data.status;
+
+        document.getElementById('rideId').value = data.id;
+    });
+}
+
+function getRide() {
+    let id = document.getElementById('rideId').value;
+
+    fetch('/api/rides/' + id)
+    .then(res => res.json())
+    .then(response => {
+        let data = response.data;
+
+        document.getElementById('result').innerText =
+            "Current Status: " + data.status;
+    });
+}
+
+function userCancel() {
+    updateStatus("CANCELLED", "USER");
+}
+
+function driverCancel() {
+    updateStatus("CANCELLED", "DRIVER");
+}
+
+function startRide() {
+    updateStatus("STARTED");
+}
+
+function completeRide() {
+    updateStatus("COMPLETED");
+}
+
+function updateStatus(status, type) {
+    let id = document.getElementById('rideId').value;
+    let url = '/api/rides/' + id + '/status?status=' + status;
+
+    if (type) {
+        url += '&cancellationType=' + type;
+    }
+
+    fetch(url, { method: 'PUT' })
+    .then(res => res.json())
+    .then(response => {
+        let data = response.data;
+
+        document.getElementById('result').innerText =
+            "Updated Status: " + data.status;
+    });
+}
+</script>
+</body>
+</html>
