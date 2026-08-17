@@ -4,6 +4,7 @@ import com.example.ridebookingservice.dto.*;
 import com.example.ridebookingservice.entity.*;
 import com.example.ridebookingservice.repository.RideRepository;
 import com.example.ridebookingservice.kafka.RideProducer;
+import com.example.ridebookingservice.client.PaymentClient;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +14,12 @@ public class RideService {
 	
 	private final RideRepository rideRepository;
 	private final RideProducer rideProducer;
+	private final PaymentClient paymentClient;
 	
-	public RideService(RideRepository rideRepository, RideProducer rideProducer) {
+	public RideService(RideRepository rideRepository, RideProducer rideProducer, PaymentClient paymentClient) {
 		this.rideRepository = rideRepository;
 		this.rideProducer = rideProducer;
+		this.paymentClient = paymentClient;
 	}
 	
 // -----------------------------------LOGGER---------------------------------------------------------------------------
@@ -129,4 +132,27 @@ public class RideService {
 				ride.getStatus()
 			);
 	}
+
+// ------------------------------------PAYMENT PROCESSING-----------------------------------------------------------
+// ------------------------------------PAYMENT PROCESSING-----------------------------------------------------------
+
+	public Ride processPayment(Long rideId, String method, Double amount) {
+		Ride ride = getRide(rideId);
+
+		if (ride.getStatus() != RideStatus.DRIVER_ASSIGNED) {
+			throw new IllegalStateException("Cannot process payment — ride is not in DRIVER_ASSIGNED state");
+		}
+
+		PaymentResponse response = paymentClient.charge(rideId, 1L, amount, method); // riderId hardcoded to 1L for now — revisit once auth is wired in
+
+		ride.setPaymentStatus(response.getStatus());
+
+		if ("SUCCESS".equals(response.getStatus())) {
+			ride.setStatus(RideStatus.COMPLETED);
+		}
+
+		rideRepository.save(ride);
+		return ride;
+	}
+
 }

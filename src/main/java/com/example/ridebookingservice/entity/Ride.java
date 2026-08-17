@@ -23,10 +23,15 @@ public class Ride {
     private String pickupLocation;
     private String dropLocation;
 
+    private String paymentStatus;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", columnDefinition = "VARCHAR(20)")
     private RideStatus status;
    // private String status;
+
+    private Long driverId;
     
 
     // Getters and Setters
@@ -69,4 +74,13 @@ public class Ride {
     public void setStatus(RideStatus status) {
         this.status = status;
     }
+
+    public void setDriverId(Long driverId) { this.driverId = driverId; }
+
+    public Long getDriverId() { return driverId; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
 }

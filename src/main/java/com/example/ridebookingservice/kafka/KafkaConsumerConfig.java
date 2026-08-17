@@ -1,6 +1,6 @@
 package com.example.ridebookingservice.kafka;
 
-import com.example.ridebookingservice.dto.RideRequest;
+import com.example.ridebookingservice.event.RideResponseEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -19,13 +19,14 @@ import java.util.Map;
 public class KafkaConsumerConfig {
 
     @Bean
-    public ConsumerFactory<String, RideRequest> consumerFactory() {
-        JsonDeserializer<RideRequest> deserializer = new JsonDeserializer<>(RideRequest.class);
-        deserializer.addTrustedPackages("*"); // allow deserialization from all packages
+    public ConsumerFactory<String, RideResponseEvent> consumerFactory() {
+        JsonDeserializer<RideResponseEvent> deserializer = new JsonDeserializer<>(RideResponseEvent.class);
+        deserializer.addTrustedPackages("*");
+        deserializer.ignoreTypeHeaders();
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "ride-booking-group");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "ride-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -34,8 +35,8 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, RideRequest> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, RideRequest> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, RideResponseEvent> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, RideResponseEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
